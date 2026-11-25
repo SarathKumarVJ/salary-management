@@ -35,6 +35,8 @@ group :development, :test do
 end
 
 gem "pagy", "~> 43.8"
+# CSV export of the employee list (no longer a default gem since Ruby 3.4)
+gem "csv", "~> 3.3"
 gem "rack-cors", "~> 3.0"
 
 gem "rspec-rails", "~> 8.1", groups: [ :development, :test ]

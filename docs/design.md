@@ -20,7 +20,7 @@ flowchart LR
 
 | Column | Type | Notes |
 |---|---|---|
-| `full_name` | string, not null, ≤ 255 | prefix search; indexed |
+| `full_name` | string, not null, ≤ 255 | searched (contains); indexed for the default name sort |
 | `email` | string, not null | **unique index**; format validated |
 | `job_title` | string, not null | indexed |
 | `department` | string, not null | indexed |
@@ -32,9 +32,7 @@ flowchart LR
 
 **Indexes:** `email` (unique; the case-insensitive collation also makes it case-insensitive), `full_name`, `department`, `job_title`, and
 `[country, job_title]`, which serves both the country filter (its leftmost column) and the "job title within a country" question, so
-`country` has no index of its own. Name search uses `LIKE 'term%'` on `full_name` / `email`, which can
-use an index. A contains-search would need a full scan; at 10k rows that is still fast, so this is measured,
-not guessed.
+`country` has no index of its own. Search is a **contains** match (`LIKE '%term%'`, wildcards in the term escaped), so "Silva" finds "Ana Silva". A prefix match can use an index but misses surnames. A contains match scans the table, which at 10k rows is still fast. This is checked with `EXPLAIN` and timing once the seeds exist (slice 6).
 
 **Why currency is derived from the country:** this app allows exactly one currency per country. Letting HR
 type both fields opens the door to "India / USD" rows that silently corrupt every per-country aggregate.
@@ -89,9 +87,9 @@ Everything except `POST /session` and `GET /up` requires `Authorization: Bearer 
 | Method & path | Purpose |
 |---|---|
 | `POST /session` · `DELETE /session` · `GET /session` | Sign in (201 with token; 401 with a generic message on bad credentials) · sign out (204) · current user |
-| `GET /employees?q=&country=&department=&job_title=&sort=&dir=&page=&per_page=` | Paginated, filtered list. `sort` is checked against an allow-list. Pagination metadata is in the body. |
-| `GET /employees.csv?…same filters` | CSV export of the filtered set |
-| `GET /employees/:id` · `POST /employees` · `PATCH /employees/:id` · `DELETE /employees/:id` | CRUD (built in slice 4; the list `GET /employees` comes in slice 5 with pagination). Returns 201 / 200 / 204; 400 for a missing `employee` key or malformed JSON; 403 without the `hr_manager` role; 404 for an unknown id; 422 with `{ "errors": { field: [msg] } }` |
+| `GET /employees?q=&country=&department=&job_title=&sort=&dir=&page=&limit=` | Paginated, filtered list: `{ employees: [...], meta: { page, limit, count, pages } }`. `limit` defaults to 25, max 100; a page past the end is empty. `q` is a case-insensitive contains-match on name or email. `sort` ∈ `full_name, salary, hire_date` (anything else falls back to `full_name`; **salary sort compares raw local amounts, so it is only meaningful within one country**, and the SPA offers it once a country is selected), `dir` ∈ `asc, desc`, ties broken by `id`. |
+| `GET /employees.csv?…same filters` | CSV export of every matching row (pagination ignored). Salary has two decimals. Text cells starting with `= + - @`, tab or CR get a leading `'`, so spreadsheets don't run them as formulas (CSV injection). UTF-8 with a BOM, so Excel shows accented names correctly. Built from `pluck`, with no model objects, all in memory: fine at the ~10k-row scale. Above that, stream it. |
+| `GET /employees/:id` · `POST /employees` · `PATCH /employees/:id` · `DELETE /employees/:id` | CRUD. Returns 201 / 200 / 204; 400 for a missing `employee` key or malformed JSON; 403 without the `hr_manager` role; 404 for an unknown id; 422 with `{ "errors": { field: [msg] } }` |
 | `GET /filters` | Distinct departments and job titles in use, plus the **supported** countries and levels (from `Employee`), so the SPA never hard-codes those lists |
 | `GET /insights/countries` | Per country: headcount, min / median / avg / max in local currency, and median in USD |
 | `GET /insights/job_titles?country=` | Same stats per job title, optionally within one country |
