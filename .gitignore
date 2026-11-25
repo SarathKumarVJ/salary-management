@@ -10,6 +10,7 @@ backend/config/credentials/*.key
 
 # bootstrap leftovers
 .tmp-keep/
+tmp/
 
 # Rails (rails new --skip-git skipped its own .gitignore)
 backend/.bundle/
