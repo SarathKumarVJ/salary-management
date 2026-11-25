@@ -54,7 +54,7 @@ and, ideally, one commit. TDD throughout.
 | 4 | Employee CRUD API ✅ | `/api/v1/employees` behind auth + `require_hr_manager!` (403; first consumer of the role check); 201/204/404/422; `{ errors: {} }` shape; `RecordNotUnique` (concurrent duplicate email) → 422; request specs | 2h |
 | 5 | Search query ✅ | `GET /employees` (index) via `Employees::SearchQuery`: name search, filters, allow-listed sort, pagy pagination, filter-options endpoint (incl. supported countries + levels), CSV export | 2.5h |
 | 6 | Seeds ✅ | Name text files, seeded RNG (deterministic), 10k rows via `insert_all` in batches of 1,000; currency set explicitly (callbacks skipped) + spec that it matches country; HR Manager user from env; timing recorded | 1h |
-| 7 | Insights | `Insights::SalaryStats`: min/avg/median/max + headcount by country and job title (median via MySQL 8 window functions), USD view; `EXPLAIN` check | 3h |
+| 7 | Insights ✅ | `GET /insights?group=` via `Insights::SalaryStats`: min/avg/median/max + headcount by country, job title and department (median via MySQL 8 window functions), USD view; `EXPLAIN` check | 3h |
 | 8 | Frontend foundation + sign-in | MUI, router, layout, API client (bearer token, 401 → sign-in), sign-in page, protected routes, QueryClient | 3.5h |
 | 9 | Employee list | MSW API mocks; server-side table, search, filters, pagination, CSV download, loading/empty/error states, tests | 2.5h |
 | 10 | Employee form | Create / edit / delete, inline API validation errors, tests | 2.5h |

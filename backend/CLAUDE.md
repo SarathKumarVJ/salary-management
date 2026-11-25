@@ -7,7 +7,7 @@ Ruby 3.4, Rails 8.1 `--api`, RSpec (+ FactoryBot, shoulda-matchers), MySQL 8 (de
 - Thin controllers: parse params → call service/query → render JSON. Strong params always.
 - Business logic in models (validations, scopes) and small POROs under `app/services` and `app/queries`.
   - `Employees::SearchQuery` — search, filter, sort (pagination stays in the controller via pagy)
-  - `Insights::SalaryStats` — aggregates (min/avg/max/median by country, job title)
+  - `Insights::SalaryStats` — headcount + min/avg/max/exact median by country, job title or department, in one SQL pass; never mixes currencies (see docs/design.md)
 - JSON via simple serializers (`app/serializers`) or `as_json(only:)`; one error shape everywhere: `{ "errors": { field: [msgs] } }`, using `base` for non-field errors (e.g. 401 `{ "errors": { "base": ["Not signed in"] } }`); 422 renders `record.errors` directly.
 - API namespace: `/api/v1/...`. Correct HTTP status codes (201, 204, 400, 401, 403, 404, 422).
 - DB: indexes on `country`, `job_title`, `department`, and composite where queried together. Use SQL aggregation, never load 10k rows into Ruby.

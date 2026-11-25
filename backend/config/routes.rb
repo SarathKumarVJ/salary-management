@@ -7,6 +7,7 @@ Rails.application.routes.draw do
       resource :session, only: %i[create show destroy]
       resources :employees, only: %i[index show create update destroy]
       resource :filters, only: :show
+      resource :insights, only: :show
     end
   end
 end

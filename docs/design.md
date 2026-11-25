@@ -91,17 +91,23 @@ Everything except `POST /session` and `GET /up` requires `Authorization: Bearer 
 | `GET /employees.csv?…same filters` | CSV export of every matching row (pagination ignored). Salary has two decimals. Text cells starting with `= + - @`, tab or CR get a leading `'`, so spreadsheets don't run them as formulas (CSV injection). UTF-8 with a BOM, so Excel shows accented names correctly. Built from `pluck`, with no model objects, all in memory: fine at the ~10k-row scale. Above that, stream it. |
 | `GET /employees/:id` · `POST /employees` · `PATCH /employees/:id` · `DELETE /employees/:id` | CRUD. Returns 201 / 200 / 204; 400 for a missing `employee` key or malformed JSON; 403 without the `hr_manager` role; 404 for an unknown id; 422 with `{ "errors": { field: [msg] } }` |
 | `GET /filters` | Distinct departments and job titles in use, plus the **supported** countries and levels (from `Employee`), so the SPA never hard-codes those lists |
-| `GET /insights/countries` | Per country: headcount, min / median / avg / max in local currency, and median in USD |
-| `GET /insights/job_titles?country=` | Same stats per job title, optionally within one country |
+| `GET /insights?group=country\|job_title\|department&country=` | `{ group, rates_as_of, rows: [{ name, currency, headcount, min, median, avg, max, median_usd }] }`. Every row carries its currency, so the SPA handles one shape. **`group=country`**: each country in its own currency. **`job_title`/`department` with `country`** (any case): that country's currency. **Without `country`**: USD, with every salary converted *before* aggregating. An unsupported `group` or `country` returns 400 `{ errors: { group\|country: ["is not supported"] } }`. Answers requirements Q1–Q4 (Q3: headcount per country / department / job title). The key is `rows`, not a resource name, because a row is a statistics group, not a record. |
+
+**Small groups:** a group of 1–2 people reveals their exact salaries through min/max. That's acceptable because only HR Managers, who can see every salary anyway, can call this. If insights ever reach a wider audience, suppress groups below ~5 people.
 
 ## Key algorithms
 
 - **Median in MySQL 8** (no `PERCENTILE_CONT`): number the rows within each group with
   `ROW_NUMBER() OVER (PARTITION BY grp ORDER BY salary)` and count them with `COUNT(*) OVER (PARTITION BY grp)`.
   Keep the row(s) at positions `FLOOR((n+1)/2)` and `CEIL((n+1)/2)`, then `AVG` them. This handles odd and even group
-  sizes in one query. It is covered by specs for odd, even, single-row and empty groups.
-- **USD normalisation:** a static `config/exchange_rates.yml` (rate per currency, with an "as of" date).
-  Conversion happens on aggregated values (`median × rate`), so each currency is only aggregated with itself.
+  sizes in one query, together with min / avg / max (`Insights::SalaryStats`). It is covered by specs for odd, even,
+  single-row and empty groups, and on the 10k seed every median matches a plain-Ruby recomputation (8/8 countries, 6/6 departments, 13/13 job titles).
+- **USD normalisation:** fixed, *illustrative* rates in code (`Insights::SalaryStats::USD_PER_UNIT`, `RATES_AS_OF`),
+  not live market data, so figures are stable. The date is returned to the SPA for display.
+  - Per country there is one currency, so the median can be converted *after* aggregating (`median × rate`).
+  - Job titles span currencies, so each salary is converted *before* aggregating. Currencies are never mixed.
+  - Rates enter the SQL as `CAST(? AS DECIMAL(12, 6))`. A quoted rate made MySQL fall back to `DOUBLE`, verified: it
+    returned a `Float`. The CAST keeps the arithmetic in exact `DECIMAL`.
 
 ## Seeding & performance (measured, 10,000 employees, local MySQL 8)
 
@@ -113,15 +119,20 @@ Everything except `POST /session` and `GET /up` requires `Authorization: Bearer 
 - **Speed:** **1.2 s** for 10k rows. The first version took 10.8 s because `Range#count` on dates was called once per row; the span is now precomputed.
 - **Idempotent:** employees are only inserted into an empty table, and the HR Manager is created only if missing. The dev login defaults apply **only in development/test**; every other environment must set `HR_MANAGER_EMAIL` / `HR_MANAGER_PASSWORD`.
 
+Averages of 10 runs with Active Record's query cache **off**. An earlier version of this table was measured with it on, which made the numbers 2–4× too optimistic.
+
 | Query | Time | Plan (`EXPLAIN`) |
 |---|---|---|
-| List page 1, default name sort | 1.9 ms | `index_employees_on_full_name`, reads 25 rows |
-| `count` for pagination meta | 0.5 ms | |
-| Search `q=silva` + count (contains, `LIKE '%…%'`) | 1.1 ms | walks the name index with a filter; no full sort |
-| `country=IN`, sort by salary | 1.3 ms | |
-| `department` + `job_title` | 0.7 ms | index-merge intersect of both indexes |
-| `/filters` (2 × `DISTINCT`) | 0.9 ms | |
-| CSV export, all 10k rows | ~545 ms | `pluck` 49 ms, CSV build 50 ms, **money formatting 407 ms** |
+| List page 1, default name sort | 2.9 ms | `index_employees_on_full_name`, reads 25 rows |
+| `count` for pagination meta | 2.2 ms | |
+| Search `q=silva` + count (contains, `LIKE '%…%'`) | 7.6 ms | walks the name index with a filter; no full sort |
+| `country=IN`, sort by salary | 3.7 ms | |
+| `department` + `job_title` | 2.4 ms | index-merge intersect of both indexes |
+| `/filters` (2 × `DISTINCT`) | 2.6 ms | |
+| CSV export, all 10k rows | ~535 ms | `pluck` 78 ms, CSV build 50 ms, **money formatting 407 ms** |
+| `/insights?group=country` | 28 ms | one pass with window functions |
+| `/insights?group=department&country=IN` | 8 ms | |
+| `/insights?group=job_title` (USD per row) | 39 ms | |
 
 **Conclusion:** every interactive query is far below the 300 ms target, so the contains-search scan needs no full-text index at
 this scale. The CSV cost is dominated by `number_to_rounded` (exact BigDecimal formatting). Half a second is acceptable
