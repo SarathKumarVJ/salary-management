@@ -8,7 +8,7 @@ Ruby 3.4, Rails 8.1 `--api`, RSpec (+ FactoryBot, shoulda-matchers), MySQL 8 (de
 - Business logic in models (validations, scopes) and small POROs under `app/services` and `app/queries`.
   - `Employees::SearchQuery` — filtering + pagination
   - `Insights::SalaryStats` — aggregates (min/avg/max/median by country, job title)
-- JSON via simple serializers (`app/serializers`) or `as_json(only:)`; consistent error shape `{ "errors": [..] }`.
+- JSON via simple serializers (`app/serializers`) or `as_json(only:)`; one error shape everywhere: `{ "errors": { field: [msgs] } }`, using `base` for non-field errors (e.g. 401 `{ "errors": { "base": ["Not signed in"] } }`); 422 renders `record.errors` directly.
 - API namespace: `/api/v1/...`. Correct HTTP status codes (201, 204, 404, 422).
 - DB: indexes on `country`, `job_title`, `department`, and composite where queried together. Use SQL aggregation, never load 10k rows into Ruby.
 - Median: use a window/ordered-offset query (MySQL 8 has no `percentile_cont`; use ROW_NUMBER() window functions); document the choice.

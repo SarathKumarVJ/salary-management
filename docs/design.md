@@ -43,7 +43,7 @@ type both fields opens the door to "India / USD" rows that silently corrupt ever
 
 | Table | Columns | Notes |
 |---|---|---|
-| `users` | `email` (unique), `password_digest`, `role` | `has_secure_password` (bcrypt). `role` is a Rails enum with one value today: `hr_manager`. |
+| `users` | `email` (unique), `password_digest`, `role` | `has_secure_password` (bcrypt). `role` is a Rails enum with one value today: `hr_manager`. `nil` means the account exists but has no access (403). |
 | `sessions` | `user_id`, `token` (unique), `expires_at` | One row per sign-in, token from `has_secure_token`. Deleting the row signs out immediately. |
 
 **Write paths that skip callbacks:** currency is set by a `before_validation` callback. `insert_all` (used by
@@ -67,16 +67,22 @@ sequenceDiagram
 - **Bearer token, not cookies:** in production the SPA and API run on different origins. A token in the
   `Authorization` header avoids `SameSite=None` cookies and CSRF handling.
 - **Server-side session rows** (not a stateless signed token), so sign-out and expiry really revoke access.
-  The sessions expire after 12 hours.
-- **Authorization** is one `before_action` in `Api::V1::BaseController`: `authenticate!` (401) followed by `require_hr_manager!` (403).
+  Tokens are 24-char base58 (`has_secure_token`), matched case-sensitively (`utf8mb4_bin` column).
+  The sessions expire after 12 hours (expired at exactly 12h). Expired rows are not deleted (harmless at this
+  scale; a periodic `delete_all` on expired rows is the later fix).
+- **Authorization** is one `before_action` in `Api::V1::BaseController`: `authenticate!` (401) followed by `require_hr_manager!` (403, added in slice 4 with its first consumer, the employees endpoints).
   There's no policy gem, because one role doesn't justify one.
+- **Brute force:** `rate_limit` on sign-in (10 attempts / 3 minutes per IP). It uses the cache store, which is per process, so it is fine for a single instance. Tests use the null store, so the limit isn't exercised in specs.
+- **Passwords:** at least 12 characters.
 - **Token storage in the SPA:** `localStorage`, so a page refresh keeps you signed in. The trade-off is XSS exposure.
   This is mitigated by React's escaping and by loading no third-party scripts. An httpOnly cookie on a shared domain would remove that risk, but it needs a custom domain.
 - **Bootstrap user:** `db/seeds.rb` creates one HR Manager using `HR_MANAGER_EMAIL` / `HR_MANAGER_PASSWORD`, which come from env (with a dev-only default).
 
 ## API surface (`/api/v1`)
 
-Everything except `POST /session` and `GET /up` requires `Authorization: Bearer <token>` and the `hr_manager` role.
+Everything except `POST /session` and `GET /up` requires `Authorization: Bearer <token>`. From slice 4, every endpoint except `/session` also requires the `hr_manager` role.
+
+**Errors** use one shape everywhere: `{ "errors": { field: [msgs] } }`, with `base` for errors not tied to a field (401: `{ "errors": { "base": ["Not signed in"] } }`).
 
 | Method & path | Purpose |
 |---|---|
