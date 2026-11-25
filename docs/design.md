@@ -20,18 +20,19 @@ flowchart LR
 
 | Column | Type | Notes |
 |---|---|---|
-| `full_name` | string, not null | search target |
+| `full_name` | string, not null, ≤ 255 | prefix search; indexed |
 | `email` | string, not null | **unique index**; format validated |
 | `job_title` | string, not null | indexed |
 | `department` | string, not null | indexed |
-| `level` | string, not null | e.g. L1–L6 |
-| `country` | string(2), not null | ISO 3166 code, from a fixed supported list; indexed |
+| `level` | string(2), not null | one of L1–L6 (fixed list, `Employee::LEVELS`); not indexed: no level filter in scope |
+| `country` | string(2), not null | ISO 3166 code from the supported list: AU, CA, DE, FR, GB, IN, SG, US |
 | `currency` | string(3), not null | ISO 4217; **set from country**, not user input |
-| `salary` | decimal(12,2), not null | annual gross, local currency, > 0 |
-| `hire_date` | date, not null | not in the future |
+| `salary` | decimal(12,2), not null | annual gross, local currency; > 0 and < 10¹⁰ (column limit) |
+| `hire_date` | date, not null | not in the future: compared with the UTC date + 1 day, so "today" works in every time zone without configuring one |
 
-**Indexes:** `email` (unique), `country`, `department`, `job_title`, and `[country, job_title]` for the
-"job title within a country" question. Name search uses `LIKE 'term%'` on `full_name` / `email`, which can
+**Indexes:** `email` (unique; the case-insensitive collation also makes it case-insensitive), `full_name`, `department`, `job_title`, and
+`[country, job_title]`, which serves both the country filter (its leftmost column) and the "job title within a country" question, so
+`country` has no index of its own. Name search uses `LIKE 'term%'` on `full_name` / `email`, which can
 use an index. A contains-search would need a full scan; at 10k rows that is still fast, so this is measured,
 not guessed.
 
@@ -44,6 +45,10 @@ type both fields opens the door to "India / USD" rows that silently corrupt ever
 |---|---|---|
 | `users` | `email` (unique), `password_digest`, `role` | `has_secure_password` (bcrypt). `role` is a Rails enum with one value today: `hr_manager`. |
 | `sessions` | `user_id`, `token` (unique), `expires_at` | One row per sign-in, token from `has_secure_token`. Deleting the row signs out immediately. |
+
+**Write paths that skip callbacks:** currency is set by a `before_validation` callback. `insert_all` (used by
+the seeds) skips callbacks and validations, so the seeder sets `currency` from `Employee::CURRENCY_BY_COUNTRY.fetch(country)`
+itself, and a spec checks that every seeded row's currency matches its country. No other code path uses `insert_all` or `update_column(s)`.
 
 ## Authentication & authorization
 
@@ -79,7 +84,7 @@ Everything except `POST /session` and `GET /up` requires `Authorization: Bearer 
 | `GET /employees?q=&country=&department=&job_title=&sort=&dir=&page=&per_page=` | Paginated, filtered list. `sort` is checked against an allow-list. Pagination metadata is in the body. |
 | `GET /employees.csv?…same filters` | CSV export of the filtered set |
 | `GET /employees/:id` · `POST /employees` · `PATCH /employees/:id` · `DELETE /employees/:id` | CRUD. Returns 201 / 200 / 204; 404 for an unknown id; 422 with `{ "errors": { field: [msg] } }` |
-| `GET /filters` | Distinct countries, departments, job titles for the dropdowns |
+| `GET /filters` | Distinct departments and job titles in use, plus the **supported** countries and levels (from `Employee`), so the SPA never hard-codes those lists |
 | `GET /insights/countries` | Per country: headcount, min / median / avg / max in local currency, and median in USD |
 | `GET /insights/job_titles?country=` | Same stats per job title, optionally within one country |
 

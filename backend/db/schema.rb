@@ -10,5 +10,23 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 0) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_25_173053) do
+  create_table "employees", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "full_name", null: false
+    t.string "email", null: false
+    t.string "job_title", null: false
+    t.string "department", null: false
+    t.string "level", limit: 2, null: false
+    t.string "country", limit: 2, null: false
+    t.string "currency", limit: 3, null: false
+    t.decimal "salary", precision: 12, scale: 2, null: false
+    t.date "hire_date", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["country", "job_title"], name: "index_employees_on_country_and_job_title"
+    t.index ["department"], name: "index_employees_on_department"
+    t.index ["email"], name: "index_employees_on_email", unique: true
+    t.index ["full_name"], name: "index_employees_on_full_name"
+    t.index ["job_title"], name: "index_employees_on_job_title"
+  end
 end

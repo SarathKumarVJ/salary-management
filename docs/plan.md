@@ -51,9 +51,9 @@ and, ideally, one commit. TDD throughout.
 | 1 | Requirements v1 + design ✅ | One-page requirements (goal, scope, out-of-scope + why, assumptions); architecture + auth diagrams; data model; API surface | 1.5h |
 | 2 | Employee model | Migration (decimal salary, currency from country, indexes incl. composite country+job_title), validations, factory, model specs | 1.5h |
 | 3 | Auth API | `User` (`has_secure_password`, `role` enum) + `Session` (token, expiry); `POST/GET/DELETE /api/v1/session`; `authenticate!` (401) + `require_hr_manager!` (403) in the API base controller; request specs | 2.5h |
-| 4 | Employee CRUD API | `/api/v1/employees` behind auth; 201/204/404/422; `{ errors: {} }` shape; request specs | 2h |
-| 5 | Search query | `Employees::SearchQuery`: name search, filters, allow-listed sort, pagy pagination, filter-options endpoint, CSV export | 2.5h |
-| 6 | Seeds | Name text files, seeded RNG (deterministic), 10k rows via `insert_all` in batches of 1,000; HR Manager user from env; timing recorded | 1h |
+| 4 | Employee CRUD API | `/api/v1/employees` behind auth; 201/204/404/422; `{ errors: {} }` shape; `RecordNotUnique` (concurrent duplicate email) → 422; request specs | 2h |
+| 5 | Search query | `Employees::SearchQuery`: name search, filters, allow-listed sort, pagy pagination, filter-options endpoint (incl. supported countries + levels), CSV export | 2.5h |
+| 6 | Seeds | Name text files, seeded RNG (deterministic), 10k rows via `insert_all` in batches of 1,000; currency set explicitly (callbacks skipped) + spec that it matches country; HR Manager user from env; timing recorded | 1h |
 | 7 | Insights | `Insights::SalaryStats`: min/avg/median/max + headcount by country and job title (median via MySQL 8 window functions), USD view; `EXPLAIN` check | 3h |
 | 8 | Frontend foundation + sign-in | MUI, router, layout, API client (bearer token, 401 → sign-in), sign-in page, protected routes, QueryClient | 3.5h |
 | 9 | Employee list | MSW API mocks; server-side table, search, filters, pagination, CSV download, loading/empty/error states, tests | 2.5h |
