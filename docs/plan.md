@@ -1,7 +1,7 @@
 # Delivery Plan
 
 Plan drafted after reviewing the assessment brief and the initial scaffold
-(commits `1eea7e0`, `53a12a9`, `264f422`). Each slice is one reviewable step
+(commits `ca90e72`, `57abd66`, `85bfa3a`). Each slice is one reviewable step
 and, ideally, one commit. TDD throughout.
 
 ## 1. Brief vs. current state
@@ -30,7 +30,7 @@ and, ideally, one commit. TDD throughout.
 6. FactoryBot / shoulda-matchers not configured in `spec/rails_helper.rb`; no `spec/support/`.
 7. Frontend has no `test` script, Vitest config, setup file, or Vite dev proxy.
 8. Unneeded frameworks loaded for an API (ActionMailbox, ActionText, ActionCable, ActiveStorage, `image_processing`).
-9. Doc drift: `frontend/CLAUDE.md` says React 18 (19 installed); seed name files referenced but absent; `dotenv-rails` not in `bootstrap.sh`.
+9. Doc drift: ~~`frontend/CLAUDE.md` says React 18 (19 installed)~~; seed name files referenced but absent (slice 5); ~~`dotenv-rails` not in `bootstrap.sh`~~.
 10. `App.tsx` is still the Vite demo page.
 
 ## 3. Decisions
@@ -47,7 +47,7 @@ and, ideally, one commit. TDD throughout.
 
 | # | Slice | Contents | Est. |
 |---|---|---|---|
-| 0 | Hygiene | Node 24; root CI with rspec + frontend jobs; rubocop; CORS; RSpec support; trim frameworks; Vitest + RTL + MSW + dev proxy; doc drift | 1.5h |
+| 0 | Hygiene | Node 24; root CI with rspec + frontend jobs; rubocop; CORS; RSpec support; trim frameworks; Vitest + RTL + dev proxy; doc drift | 1.5h |
 | 1 | Requirements v1 + design | One-page requirements (goal, scope, out-of-scope + why, assumptions); architecture diagram; deploy spike | 2h |
 | 2 | Employee model | Migration (decimal salary, currency, indexes incl. composite country+job_title), validations, factory, model specs | 1.5h |
 | 3 | CRUD API | `/api/v1/employees`; 201/204/404/422; `{ errors: [] }` shape; request specs | 2h |
@@ -55,7 +55,7 @@ and, ideally, one commit. TDD throughout.
 | 5 | Seeds | Name text files, seeded RNG (deterministic), 10k rows via `insert_all` in batches of 1,000; timing recorded | 1h |
 | 6 | Insights | `Insights::SalaryStats`: min/avg/median/max + headcount by country and job title (median via MySQL 8 window functions), optional department/level, USD view; `EXPLAIN` check | 3h |
 | 7 | Frontend foundation | MUI, router, layout, API client, types, QueryClient | 2h |
-| 8 | Employee list | Server-side table, search, filters, pagination, loading/empty/error states, tests | 2.5h |
+| 8 | Employee list | MSW API mocks; server-side table, search, filters, pagination, loading/empty/error states, tests | 2.5h |
 | 9 | Employee form | Create / edit / delete, inline API validation errors, tests | 2.5h |
 | 10 | Insights page | Summary cards, tables, one chart, tests | 3h |
 | 11 | Deploy | Production config, env vars, prod seed, smoke test | 2–3h |
