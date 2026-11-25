@@ -40,7 +40,7 @@ and, ideally, one commit. TDD throughout.
 | Currency | Store `salary` (decimal) in local currency; `currency` derived from country. Per-country stats in local currency; cross-country view normalised to USD via static, dated rates. | Assumed — awaiting recruiter |
 | Auth | Sign-in for the HR Manager persona: `has_secure_password`, revocable session tokens (bearer), single `hr_manager` role enforced in one `before_action`. | **Decided (owner)** — awaiting recruiter confirmation |
 | Deploy | **Local first**: the full system runs end to end locally before any hosting work. Then Railway (API + MySQL + static SPA); config is env-only so the host can change. | **Decided (owner)**, host switchable |
-| Component library | MUI — data grid + form controls out of the box; lowest-risk path. | Proposed |
+| Component library | MUI — data grid + form controls out of the box; lowest-risk path. | **Decided** (slice 8) |
 | Product extras | CSV export of filtered list (HR is migrating off Excel). CSV import listed as deliberately left out. | Proposed |
 
 ## 4. Slices and estimates
@@ -55,8 +55,8 @@ and, ideally, one commit. TDD throughout.
 | 5 | Search query ✅ | `GET /employees` (index) via `Employees::SearchQuery`: name search, filters, allow-listed sort, pagy pagination, filter-options endpoint (incl. supported countries + levels), CSV export | 2.5h |
 | 6 | Seeds ✅ | Name text files, seeded RNG (deterministic), 10k rows via `insert_all` in batches of 1,000; currency set explicitly (callbacks skipped) + spec that it matches country; HR Manager user from env; timing recorded | 1h |
 | 7 | Insights ✅ | `GET /insights?group=` via `Insights::SalaryStats`: min/avg/median/max + headcount by country, job title and department (median via MySQL 8 window functions), USD view; `EXPLAIN` check | 3h |
-| 8 | Frontend foundation + sign-in | MUI, router, layout, API client (bearer token, 401 → sign-in), sign-in page, protected routes, QueryClient | 3.5h |
-| 9 | Employee list | MSW API mocks; server-side table, search, filters, pagination, CSV download, loading/empty/error states, tests | 2.5h |
+| 8 | Frontend foundation + sign-in ✅ | MUI, router, layout, API client (bearer token, 401 → sign-in), sign-in page, protected routes, QueryClient, MSW test setup | 3.5h |
+| 9 | Employee list | Server-side table, search, filters, pagination, CSV download, loading/empty/error states (incl. 403 for a user without the role), tests | 2.5h |
 | 10 | Employee form | Create / edit / delete, inline API validation errors, tests | 2.5h |
 | 11 | Insights page | Summary cards, tables, one chart, tests | 3h |
 | 12 | Local end-to-end | Fresh clone → `bin/setup`, seed, sign in, every flow by hand; fix gaps; README setup verified | 0.5h |

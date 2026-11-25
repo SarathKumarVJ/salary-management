@@ -74,6 +74,9 @@ sequenceDiagram
 - **Passwords:** at least 12 characters.
 - **Token storage in the SPA:** `localStorage`, so a page refresh keeps you signed in. The trade-off is XSS exposure.
   This is mitigated by React's escaping and by loading no third-party scripts. An httpOnly cookie on a shared domain would remove that risk, but it needs a custom domain.
+- **Signing out in the SPA:** a 401 clears the stored token (only if it is still the token that request sent), which
+  redirects to sign-in. Sign out clears it at once and revokes the session in the background. Other tabs follow via
+  the browser's `storage` event. Whenever the token goes away, the React Query cache is cleared, so no salary data outlives the session.
 - **Bootstrap user:** `db/seeds.rb` creates one HR Manager using `HR_MANAGER_EMAIL` / `HR_MANAGER_PASSWORD`, which come from env (with a dev-only default).
 
 ## API surface (`/api/v1`)
@@ -148,6 +151,10 @@ hosting work begins. Railway is the current choice. Nothing in the code is tied 
 | **Railway** (API + MySQL + static SPA) | Trial / hobby credit | One platform, managed MySQL, least setup. **Recommended.** |
 | Render (free web + static) + Aiven/TiDB free MySQL | $0 | Two providers; free web service sleeps, so the first request takes 30–50 s |
 | Fly.io (existing Dockerfile) + Aiven/TiDB MySQL | ~$0 | Most hands-on |
+
+Before going live (slice 13): `VITE_API_URL` must be `https://` (the bearer token and password travel in it),
+and the SPA host should send a Content-Security-Policy (`script-src 'self'`, `connect-src` the API) to enforce the
+"no third-party scripts" assumption behind the localStorage token.
 
 Production needs `DATABASE_URL`, `RAILS_MASTER_KEY`, `CORS_ORIGINS` (the SPA's URL) and `HR_MANAGER_EMAIL` / `HR_MANAGER_PASSWORD` on the API, and `VITE_API_URL` at SPA build time.
 

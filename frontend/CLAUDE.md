@@ -1,15 +1,17 @@
 # Frontend (React + Vite + TypeScript)
 
 ## Stack
-React 19, Vite 8, TypeScript, TanStack Query (server state), React Router, a UI kit (MUI or shadcn/ui — pick one, keep it), Vitest + React Testing Library, MSW for API mocks.
+React 19, Vite 8, TypeScript, TanStack Query (server state), React Router, MUI, Vitest + React Testing Library, MSW for API mocks.
 Owner has limited production React experience: **keep it simple, idiomatic, function components + hooks only.** Explain non-obvious patterns in the step summary.
 
 ## Structure (src/)
-- `api/` fetch client + typed endpoint functions (`employees.ts`, `insights.ts`)
+- `api/` `client.ts` (fetch + bearer token, `ApiError`), `token.ts` (token store), typed endpoint functions (`session.ts`, `employees.ts`, `insights.ts`)
+- `features/auth/` sign-in page
 - `features/employees/` list, form, hooks (`useEmployees`)
 - `features/insights/` charts/tables for salary stats
 - `components/` shared UI
 - `types/` shared TS types matching API JSON
+- `test/` MSW `server` (each test adds its handlers) and `renderApp(path)`
 
 ## Conventions
 - API base URL from `VITE_API_URL`: unset in dev (same-origin `/api`, Vite proxies to `localhost:3000`); set to the Rails URL in production (allowed via `CORS_ORIGINS`).
