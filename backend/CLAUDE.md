@@ -13,7 +13,7 @@ Ruby 3.4, Rails 8.1 `--api`, RSpec (+ FactoryBot, shoulda-matchers), MySQL 8 (de
 - DB: indexes on `country`, `job_title`, `department`, and composite where queried together. Use SQL aggregation, never load 10k rows into Ruby.
 - Median: use a window/ordered-offset query (MySQL 8 has no `percentile_cont`; use ROW_NUMBER() window functions); document the choice.
 - Money: store integer minor units or `decimal(12,2)`; never float. Store currency code per employee.
-- Seeds: `db/seeds.rb` reads `db/seeds/first_names.txt` + `last_names.txt`, builds 10,000 rows, `insert_all` in batches of 1,000. Must run in seconds.
+- Seeds: `db/seeds.rb` creates the HR Manager (env vars; dev defaults only in development/test) and calls `Employees::Seeder`: 10,000 deterministic rows from `db/seeds/first_names.txt` + `last_names.txt`, `insert_all!` in batches of 1,000 inside one transaction, currency set explicitly. Runs in about a second.
 
 ## Testing (TDD, RSpec)
 - Order: model spec → service/query spec → request spec. Write the failing spec first.

@@ -103,6 +103,30 @@ Everything except `POST /session` and `GET /up` requires `Authorization: Bearer 
 - **USD normalisation:** a static `config/exchange_rates.yml` (rate per currency, with an "as of" date).
   Conversion happens on aggregated values (`median × rate`), so each currency is only aggregated with itself.
 
+## Seeding & performance (measured, 10,000 employees, local MySQL 8)
+
+**Seeding:** `bin/rails db:seed` runs `Employees::Seeder`.
+- **Deterministic:** a fixed `Random` seed, so every run produces the same data.
+- **Names:** first and last names from `db/seeds/*.txt` (~100 each, including accented names). Emails are transliterated to ASCII and given a number suffix, so they're unique.
+- **Distribution:** countries and levels are weighted. Salary = the country's L3 pay band × a level multiplier (0.6–2.2) × a job-title factor (0.7–1.15) × a ±15% spread, so pay differs by country, level *and* role.
+- **Writes:** `insert_all!` in batches of 1,000 inside **one transaction** (a failed run leaves no partial table), with currency set explicitly.
+- **Speed:** **1.2 s** for 10k rows. The first version took 10.8 s because `Range#count` on dates was called once per row; the span is now precomputed.
+- **Idempotent:** employees are only inserted into an empty table, and the HR Manager is created only if missing. The dev login defaults apply **only in development/test**; every other environment must set `HR_MANAGER_EMAIL` / `HR_MANAGER_PASSWORD`.
+
+| Query | Time | Plan (`EXPLAIN`) |
+|---|---|---|
+| List page 1, default name sort | 1.9 ms | `index_employees_on_full_name`, reads 25 rows |
+| `count` for pagination meta | 0.5 ms | |
+| Search `q=silva` + count (contains, `LIKE '%…%'`) | 1.1 ms | walks the name index with a filter; no full sort |
+| `country=IN`, sort by salary | 1.3 ms | |
+| `department` + `job_title` | 0.7 ms | index-merge intersect of both indexes |
+| `/filters` (2 × `DISTINCT`) | 0.9 ms | |
+| CSV export, all 10k rows | ~545 ms | `pluck` 49 ms, CSV build 50 ms, **money formatting 407 ms** |
+
+**Conclusion:** every interactive query is far below the 300 ms target, so the contains-search scan needs no full-text index at
+this scale. The CSV cost is dominated by `number_to_rounded` (exact BigDecimal formatting). Half a second is acceptable
+for a download, and hand-rolled formatting would be about 4× faster but is more code to trust. Revisit only if exports grow.
+
 ## Deployment (local first, then hosted)
 
 The whole system has to work locally end to end (MySQL, Rails, Vite, seeded data, sign-in) before any
