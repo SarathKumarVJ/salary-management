@@ -7,7 +7,7 @@ import type { FormEvent, ReactNode } from 'react'
 import { Link as RouterLink, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../../api/client'
 import { downloadEmployeesCsv, fetchEmployees, fetchFilterOptions } from '../../api/employees'
-import { countryName, formatMoney } from '../../format'
+import { countryName, formatMoney, optionsWith } from '../../format'
 
 const LIST_PARAMS = ['q', 'country', 'department', 'job_title', 'sort', 'dir', 'page']
 const SORTABLE = ['full_name', 'hire_date', 'salary']
@@ -69,13 +69,12 @@ export default function EmployeesPage() {
     </TableCell>
   )
 
-  // The value from the URL stays selectable even before the options load (or if it is no longer in use).
   const filterSelect = (name: string, label: string, values: string[] = [], optionLabel = (value: string) => value) => {
     const value = params.get(name) ?? ''
     return (
       <TextField select size="small" label={label} value={value} onChange={(event) => update({ [name]: event.target.value })} sx={{ minWidth: 180 }}>
         <MenuItem value="">All</MenuItem>
-        {[...new Set([...(value ? [value] : []), ...values])].map((option) => (
+        {optionsWith(value, values).map((option) => (
           <MenuItem key={option} value={option}>
             {optionLabel(option)}
           </MenuItem>

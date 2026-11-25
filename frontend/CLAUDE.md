@@ -8,10 +8,10 @@ Owner has limited production React experience: **keep it simple, idiomatic, func
 - `api/` `client.ts` (fetch + bearer token, `ApiError`), `token.ts` (token store), typed endpoint functions (`session.ts`, `employees.ts`, `insights.ts`)
 - `features/auth/` sign-in page
 - `features/employees/` list page (queries inline: no hook until a second user needs it), form
-- `features/insights/` charts/tables for salary stats
+- `features/insights/` grouped stats table + one bar chart
 - `components/` shared UI
 - `types/` shared TS types matching API JSON
-- `format.ts` display helpers (`formatMoney`, `countryName`), shared by the list and insights
+- `format.ts` display helpers (`formatMoney`, `countryName`, `optionsWith` for selects), shared by the pages
 - `test/` MSW `server` (baseline responses for session, employees, filters; tests override with `server.use`) and `renderApp(path)`
 
 ## Conventions

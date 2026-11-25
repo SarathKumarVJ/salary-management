@@ -58,7 +58,7 @@ and, ideally, one commit. TDD throughout.
 | 8 | Frontend foundation + sign-in ✅ | MUI, router, layout, API client (bearer token, 401 → sign-in), sign-in page, protected routes, QueryClient, MSW test setup | 3.5h |
 | 9 | Employee list ✅ | Server-side table, search, filters, pagination, CSV download, loading/empty/error states (incl. 403 for a user without the role), tests | 2.5h |
 | 10 | Employee form ✅ | Create / edit / delete, inline API validation errors, tests | 2.5h |
-| 11 | Insights page | Summary cards, tables, one chart, tests | 3h |
+| 11 | Insights page ✅ | Grouped stats table (country / job title / department, country filter), headcount summary line (instead of cards, which would repeat the table), one chart without a library, tests | 3h |
 | 12 | Local end-to-end | Fresh clone → `bin/setup`, seed, sign in, every flow by hand; fix gaps; README setup verified | 0.5h |
 | 13 | Deploy | Railway (or alternative): env vars, prod seed, smoke test | 2–3h |
 | 14 | Submission | README (setup, decisions, trade-offs, performance), AI prompt log, demo video | 2h |

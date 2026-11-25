@@ -199,4 +199,12 @@ describe('employee list', () => {
 
     expect(await screen.findByRole('combobox', { name: 'Country' })).toHaveTextContent('India')
   })
+
+  it('does not crash on an unknown country code in the URL', async () => {
+    mockEmployees()
+    renderApp('/employees?country=foo')
+
+    await screen.findByText('Ana Silva')
+    expect(screen.getByRole('combobox', { name: 'Country' })).toHaveTextContent('foo')
+  })
 })

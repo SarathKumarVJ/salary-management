@@ -100,6 +100,20 @@ sequenceDiagram
 - **After save or delete**, all cached queries except the session are removed (not just invalidated), so the list
   loads fresh instead of flashing a deleted row or an old salary. The list's query string travels in router state,
   so Save and Cancel return to the same filtered page; deleting an already-deleted employee (404) counts as done.
+
+## SPA: insights
+
+- **One page, one endpoint:** `?group=country|job_title|department&country=` in the URL (like the list), sent to
+  `GET /insights`. The country filter applies to job titles and departments; it is upper-cased, and an unsupported
+  one shows a "not supported" message (the API's 400).
+- **Currencies never mix:** by country, each row is in its own currency plus a `Median (USD)` column; by job title or
+  department, every row shares one currency (that country's, or USD org-wide). The "fixed rates as of" note appears
+  only when figures were converted.
+- **One chart without a chart library:** about a dozen lines of MUI boxes, a bar per group with its value as text
+  (readable by screen readers and tests). It plots the median in one currency: USD by country, otherwise the rows' own.
+  A charting dependency for a single bar chart isn't worth the bundle size.
+- **A headcount summary line instead of summary cards**, which would only repeat the table.
+- **No `keepPreviousData` here:** switching the grouping shows "Loading" instead of old rows under new headings.
 - **Bootstrap user:** `db/seeds.rb` creates one HR Manager using `HR_MANAGER_EMAIL` / `HR_MANAGER_PASSWORD`, which come from env (with a dev-only default).
 
 ## API surface (`/api/v1`)

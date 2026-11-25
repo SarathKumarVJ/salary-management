@@ -36,3 +36,19 @@ export type FilterOptions = {
   departments: string[]
   job_titles: string[]
 }
+
+/** One statistics group (a country, job title or department). Money values are 2dp decimal strings. */
+export type InsightRow = {
+  name: string
+  currency: string
+  headcount: number
+  min: string
+  median: string
+  avg: string
+  max: string
+  median_usd: string
+}
+
+export type InsightGroup = 'country' | 'job_title' | 'department'
+
+export type Insights = { group: InsightGroup; rates_as_of: string; rows: InsightRow[] }

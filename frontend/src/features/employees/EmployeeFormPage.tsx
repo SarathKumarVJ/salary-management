@@ -7,7 +7,7 @@ import { type FormEvent, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../../api/client'
 import { createEmployee, deleteEmployee, fetchEmployee, fetchFilterOptions, updateEmployee } from '../../api/employees'
-import { countryName } from '../../format'
+import { countryName, optionsWith } from '../../format'
 import type { Employee, EmployeeInput } from '../../types/api'
 
 const FIELDS = ['full_name', 'email', 'job_title', 'department', 'level', 'country', 'salary', 'hire_date'] as const
@@ -101,8 +101,6 @@ function EmployeeForm({ employee }: { employee?: Employee }) {
     />
   )
 
-  // The saved value stays selectable even before the options load.
-  const choices = (current: string, available: string[] = []) => [...new Set([...(current ? [current] : []), ...available])]
   const currency = options.data?.currencies[values.country]
 
   return (
@@ -126,13 +124,13 @@ function EmployeeForm({ employee }: { employee?: Employee }) {
         {field('department', 'Department', { slotProps: { htmlInput: { list: 'departments' } } })}
         {field('level', 'Level', {
           select: true,
-          children: choices(values.level, options.data?.levels).map((level) => (
+          children: optionsWith(values.level, options.data?.levels).map((level) => (
             <MenuItem key={level} value={level}>{level}</MenuItem>
           )),
         })}
         {field('country', 'Country', {
           select: true,
-          children: choices(values.country, options.data?.countries).map((code) => (
+          children: optionsWith(values.country, options.data?.countries).map((code) => (
             <MenuItem key={code} value={code}>{countryName(code)}</MenuItem>
           )),
         })}
