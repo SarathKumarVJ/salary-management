@@ -12,7 +12,7 @@ rmdir backend frontend
 
 gem list -i rails >/dev/null || gem install rails
 rails new backend --api -T --database=mysql --skip-git --skip-kamal --skip-solid
-(cd backend && bundle add pagy rack-cors && bundle add rspec-rails factory_bot_rails shoulda-matchers faker --group development,test)
+(cd backend && bundle add pagy rack-cors && bundle add rspec-rails factory_bot_rails shoulda-matchers faker dotenv-rails --group development,test)
 (cd backend && bin/rails generate rspec:install)
 
 npm create vite@latest frontend -- --template react-ts

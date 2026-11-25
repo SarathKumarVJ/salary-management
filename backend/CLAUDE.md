@@ -1,7 +1,7 @@
 # Backend (Rails API)
 
 ## Stack
-Ruby 3.4, Rails 7.2+/8 `--api`, RSpec (+ FactoryBot, shoulda-matchers), MySQL 8 (dev/test), rack-cors, Kaminari or pagy for pagination, rubocop-rails-omakase.
+Ruby 3.4, Rails 8.1 `--api`, RSpec (+ FactoryBot, shoulda-matchers), MySQL 8 (dev/test), rack-cors, pagy for pagination, rubocop-rails-omakase.
 
 ## Conventions
 - Thin controllers: parse params → call service/query → render JSON. Strong params always.

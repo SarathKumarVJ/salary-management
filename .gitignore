@@ -17,7 +17,6 @@ backend/.bundle/
 backend/vendor/bundle/
 backend/log/*
 backend/tmp/*
-backend/storage/*
 
 # Frontend (create-vite also adds frontend/.gitignore)
 frontend/node_modules/
