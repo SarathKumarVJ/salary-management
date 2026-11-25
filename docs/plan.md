@@ -1,7 +1,7 @@
 # Delivery Plan
 
 Plan drafted after reviewing the assessment brief and the initial scaffold
-(commits `ca90e72`, `57abd66`, `85bfa3a`). Each slice is one reviewable step
+(commits `88ddf83`, `90855d2`, `1136b21`). Each slice is one reviewable step
 and, ideally, one commit. TDD throughout.
 
 ## 1. Brief vs. current state
@@ -35,11 +35,11 @@ and, ideally, one commit. TDD throughout.
 
 ## 3. Decisions
 
-| Decision | Recommendation | Status |
+| Decision | Choice | Status |
 |---|---|---|
-| Currency | Store `salary` (decimal) + `currency` per employee. Per-country stats in local currency; cross-country view normalised to USD via a small static FX table (limitation documented). | Awaiting recruiter |
-| Deploy with MySQL | Free tiers rarely offer MySQL (Render free is Postgres-only and expires after 30 days). Railway (app + MySQL), or Render/Fly + Aiven / TiDB Serverless free MySQL. Spike early. | Awaiting recruiter |
-| Auth | Out of scope (single HR persona); documented in requirements. | Awaiting recruiter |
+| Currency | Store `salary` (decimal) in local currency; `currency` derived from country. Per-country stats in local currency; cross-country view normalised to USD via static, dated rates. | Assumed — awaiting recruiter |
+| Auth | Sign-in for the HR Manager persona: `has_secure_password`, revocable session tokens (bearer), single `hr_manager` role enforced in one `before_action`. | **Decided (owner)** — awaiting recruiter confirmation |
+| Deploy | **Local first**: the full system runs end to end locally before any hosting work. Then Railway (API + MySQL + static SPA); config is env-only so the host can change. | **Decided (owner)**, host switchable |
 | Component library | MUI — data grid + form controls out of the box; lowest-risk path. | Proposed |
 | Product extras | CSV export of filtered list (HR is migrating off Excel). CSV import listed as deliberately left out. | Proposed |
 
@@ -47,22 +47,25 @@ and, ideally, one commit. TDD throughout.
 
 | # | Slice | Contents | Est. |
 |---|---|---|---|
-| 0 | Hygiene | Node 24; root CI with rspec + frontend jobs; rubocop; CORS; RSpec support; trim frameworks; Vitest + RTL + dev proxy; doc drift | 1.5h |
-| 1 | Requirements v1 + design | One-page requirements (goal, scope, out-of-scope + why, assumptions); architecture diagram; deploy spike | 2h |
-| 2 | Employee model | Migration (decimal salary, currency, indexes incl. composite country+job_title), validations, factory, model specs | 1.5h |
-| 3 | CRUD API | `/api/v1/employees`; 201/204/404/422; `{ errors: [] }` shape; request specs | 2h |
-| 4 | Search query | `Employees::SearchQuery`: name search, filters, allow-listed sort, pagy pagination, filter-options endpoint | 2h |
-| 5 | Seeds | Name text files, seeded RNG (deterministic), 10k rows via `insert_all` in batches of 1,000; timing recorded | 1h |
-| 6 | Insights | `Insights::SalaryStats`: min/avg/median/max + headcount by country and job title (median via MySQL 8 window functions), optional department/level, USD view; `EXPLAIN` check | 3h |
-| 7 | Frontend foundation | MUI, router, layout, API client, types, QueryClient | 2h |
-| 8 | Employee list | MSW API mocks; server-side table, search, filters, pagination, loading/empty/error states, tests | 2.5h |
-| 9 | Employee form | Create / edit / delete, inline API validation errors, tests | 2.5h |
-| 10 | Insights page | Summary cards, tables, one chart, tests | 3h |
-| 11 | Deploy | Production config, env vars, prod seed, smoke test | 2–3h |
-| 12 | Submission | README (setup, decisions, trade-offs, performance), AI prompt log, demo video | 2h |
-| | **Total** | | **≈ 27–28h (~3.5 focused days, 4 with buffer)** |
+| 0 | Hygiene ✅ | Node 24; root CI with rspec + frontend jobs; rubocop; CORS; RSpec support; trim frameworks; Vitest + RTL + dev proxy; doc drift | 1.5h |
+| 1 | Requirements v1 + design ✅ | One-page requirements (goal, scope, out-of-scope + why, assumptions); architecture + auth diagrams; data model; API surface | 1.5h |
+| 2 | Employee model | Migration (decimal salary, currency from country, indexes incl. composite country+job_title), validations, factory, model specs | 1.5h |
+| 3 | Auth API | `User` (`has_secure_password`, `role` enum) + `Session` (token, expiry); `POST/GET/DELETE /api/v1/session`; `authenticate!` (401) + `require_hr_manager!` (403) in the API base controller; request specs | 2.5h |
+| 4 | Employee CRUD API | `/api/v1/employees` behind auth; 201/204/404/422; `{ errors: {} }` shape; request specs | 2h |
+| 5 | Search query | `Employees::SearchQuery`: name search, filters, allow-listed sort, pagy pagination, filter-options endpoint, CSV export | 2.5h |
+| 6 | Seeds | Name text files, seeded RNG (deterministic), 10k rows via `insert_all` in batches of 1,000; HR Manager user from env; timing recorded | 1h |
+| 7 | Insights | `Insights::SalaryStats`: min/avg/median/max + headcount by country and job title (median via MySQL 8 window functions), USD view; `EXPLAIN` check | 3h |
+| 8 | Frontend foundation + sign-in | MUI, router, layout, API client (bearer token, 401 → sign-in), sign-in page, protected routes, QueryClient | 3.5h |
+| 9 | Employee list | MSW API mocks; server-side table, search, filters, pagination, CSV download, loading/empty/error states, tests | 2.5h |
+| 10 | Employee form | Create / edit / delete, inline API validation errors, tests | 2.5h |
+| 11 | Insights page | Summary cards, tables, one chart, tests | 3h |
+| 12 | Local end-to-end | Fresh clone → `bin/setup`, seed, sign in, every flow by hand; fix gaps; README setup verified | 0.5h |
+| 13 | Deploy | Railway (or alternative): env vars, prod seed, smoke test | 2–3h |
+| 14 | Submission | README (setup, decisions, trade-offs, performance), AI prompt log, demo video | 2h |
+| | **Total** | | **≈ 31–32h (~4 focused days, 4.5 with buffer)** |
 
 ## 5. Risks and cut order
 
-- **Critical path:** deploy (slices 1, 11), median + currency correctness (6), frontend velocity (8–10).
-- **Cut first if time is short:** department/level insights, then the chart. Tests and docs are not cut.
+- **Critical path:** auth wiring across SPA + API (3, 8), median + currency correctness (7), frontend velocity (9–11), deploy (13, now deliberately last).
+- **Deploy risk:** moved to the end by choice (local first). Mitigation: config is env-only and the Dockerfile already builds; keep slice 13 time-boxed.
+- **Cut first if time is short:** the chart, then CSV export. Auth, tests and docs are not cut.
