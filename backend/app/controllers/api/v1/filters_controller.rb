@@ -5,6 +5,7 @@ module Api
       def show
         render json: {
           countries: Employee::CURRENCY_BY_COUNTRY.keys,
+          currencies: Employee::CURRENCY_BY_COUNTRY,
           levels: Employee::LEVELS,
           departments: Employee.distinct.order(:department).pluck(:department),
           job_titles: Employee.distinct.order(:job_title).pluck(:job_title)

@@ -88,6 +88,18 @@ sequenceDiagram
   `Authorization` header, and putting the token in a URL would leak it into logs and history.
 - **Money display:** `Intl.NumberFormat` in the row's currency. The exact decimal string is converted to a number
   for display only; nothing is calculated in the browser.
+
+## SPA: employee form
+
+- **One page for add and edit** (`/employees/new`, `/employees/:id`), keyed by id so switching employees never keeps
+  the previous one's values. Salary is sent as the typed string (exact), with the currency shown from `/filters`.
+- **Job title and department are free text** with `<datalist>` suggestions from values in use: HR can add a new
+  title, and typos that would split insight groups are less likely. Level and country are selects (fixed lists).
+- **Validation stays on the server:** 422 messages render under their fields; anything else (`base`, or an attribute
+  not on the form) goes in a banner. The browser only enforces required fields and the salary range.
+- **After save or delete**, all cached queries except the session are removed (not just invalidated), so the list
+  loads fresh instead of flashing a deleted row or an old salary. The list's query string travels in router state,
+  so Save and Cancel return to the same filtered page; deleting an already-deleted employee (404) counts as done.
 - **Bootstrap user:** `db/seeds.rb` creates one HR Manager using `HR_MANAGER_EMAIL` / `HR_MANAGER_PASSWORD`, which come from env (with a dev-only default).
 
 ## API surface (`/api/v1`)
@@ -104,7 +116,7 @@ Everything except `POST /session` and `GET /up` requires `Authorization: Bearer 
 | `GET /employees?q=&country=&department=&job_title=&sort=&dir=&page=&limit=` | Paginated, filtered list: `{ employees: [...], meta: { page, limit, count, pages } }`. `limit` defaults to 25, max 100; a page past the end is empty. `q` is a case-insensitive contains-match on name or email. `sort` ∈ `full_name, salary, hire_date` (anything else falls back to `full_name`; **salary sort compares raw local amounts, so it is only meaningful within one country**, and the SPA offers it once a country is selected), `dir` ∈ `asc, desc`, ties broken by `id`. |
 | `GET /employees.csv?…same filters` | CSV export of every matching row (pagination ignored). Salary has two decimals. Text cells starting with `= + - @`, tab or CR get a leading `'`, so spreadsheets don't run them as formulas (CSV injection). UTF-8 with a BOM, so Excel shows accented names correctly. Built from `pluck`, with no model objects, all in memory: fine at the ~10k-row scale. Above that, stream it. |
 | `GET /employees/:id` · `POST /employees` · `PATCH /employees/:id` · `DELETE /employees/:id` | CRUD. Returns 201 / 200 / 204; 400 for a missing `employee` key or malformed JSON; 403 without the `hr_manager` role; 404 for an unknown id; 422 with `{ "errors": { field: [msg] } }` |
-| `GET /filters` | Distinct departments and job titles in use, plus the **supported** countries and levels (from `Employee`), so the SPA never hard-codes those lists |
+| `GET /filters` | Distinct departments and job titles in use, plus the **supported** countries, their `currencies` (`{ "IN": "INR" }`, so the form shows the currency the API will derive) and levels (from `Employee`), so the SPA never hard-codes those lists. `countries` equals the keys of `currencies`; both are kept so the list's filter needs no transformation. |
 | `GET /insights?group=country\|job_title\|department&country=` | `{ group, rates_as_of, rows: [{ name, currency, headcount, min, median, avg, max, median_usd }] }`. Every row carries its currency, so the SPA handles one shape. **`group=country`**: each country in its own currency. **`job_title`/`department` with `country`** (any case): that country's currency. **Without `country`**: USD, with every salary converted *before* aggregating. An unsupported `group` or `country` returns 400 `{ errors: { group\|country: ["is not supported"] } }`. Answers requirements Q1–Q4 (Q3: headcount per country / department / job title). The key is `rows`, not a resource name, because a row is a statistics group, not a record. |
 
 **Small groups:** a group of 1–2 people reveals their exact salaries through min/max. That's acceptable because only HR Managers, who can see every salary anyway, can call this. If insights ever reach a wider audience, suppress groups below ~5 people.

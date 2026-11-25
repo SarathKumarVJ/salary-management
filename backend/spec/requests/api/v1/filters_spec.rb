@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe "GET /api/v1/filters", type: :request do
-  it "returns supported countries and levels plus departments and job titles in use" do
+  it "returns supported countries, currencies and levels plus departments and job titles in use" do
     create(:employee, department: "Finance", job_title: "Analyst")
     create(:employee, department: "Engineering", job_title: "Analyst")
 
@@ -10,6 +10,7 @@ RSpec.describe "GET /api/v1/filters", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.parsed_body).to eq(
       "countries" => Employee::CURRENCY_BY_COUNTRY.keys,
+      "currencies" => Employee::CURRENCY_BY_COUNTRY,
       "levels" => Employee::LEVELS,
       "departments" => [ "Engineering", "Finance" ],
       "job_titles" => [ "Analyst" ]

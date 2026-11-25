@@ -1,10 +1,10 @@
 import {
-  Alert, Box, Button, MenuItem, Paper, Table, TableBody, TableCell, TableContainer, TableHead,
+  Alert, Box, Button, Link, MenuItem, Paper, Table, TableBody, TableCell, TableContainer, TableHead,
   TablePagination, TableRow, TableSortLabel, TextField, Typography,
 } from '@mui/material'
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
 import type { FormEvent, ReactNode } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link as RouterLink, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../../api/client'
 import { downloadEmployeesCsv, fetchEmployees, fetchFilterOptions } from '../../api/employees'
 import { countryName, formatMoney } from '../../format'
@@ -123,7 +123,10 @@ export default function EmployeesPage() {
               {data.employees.map((employee) => (
                 <TableRow key={employee.id}>
                   <TableCell>
-                    {employee.full_name}
+                    {/* state: the form returns to this list with the same search and filters. */}
+                    <Link component={RouterLink} to={`/employees/${employee.id}`} state={{ list: query }}>
+                      {employee.full_name}
+                    </Link>
                     <Typography variant="body2" color="text.secondary">
                       {employee.email}
                     </Typography>
@@ -157,9 +160,14 @@ export default function EmployeesPage() {
         <Typography variant="h4" component="h1" sx={{ flexGrow: 1 }}>
           Employees
         </Typography>
-        <Button variant="outlined" loading={csv.isPending} onClick={() => csv.mutate()}>
-          Download CSV
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button variant="outlined" loading={csv.isPending} onClick={() => csv.mutate()}>
+            Download CSV
+          </Button>
+          <Button variant="contained" component={RouterLink} to="/employees/new" state={{ list: query }}>
+            Add employee
+          </Button>
+        </Box>
       </Box>
       {csv.isError && (
         <Alert severity="error" sx={{ mb: 2 }}>

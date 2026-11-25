@@ -33,7 +33,7 @@ function mockFilters() {
   server.use(
     http.get('*/api/v1/filters', () =>
       HttpResponse.json({
-        countries: ['IN', 'US'], levels: ['L1', 'L2', 'L3'],
+        countries: ['IN', 'US'], currencies: { IN: 'INR', US: 'USD' }, levels: ['L1', 'L2', 'L3'],
         departments: ['Engineering', 'People'], job_titles: ['Recruiter', 'Software Engineer'],
       }),
     ),

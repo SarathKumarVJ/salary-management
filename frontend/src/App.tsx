@@ -4,6 +4,7 @@ import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { useToken } from './api/token'
 import AppLayout from './components/AppLayout'
 import SignInPage from './features/auth/SignInPage'
+import EmployeeFormPage from './features/employees/EmployeeFormPage'
 import EmployeesPage from './features/employees/EmployeesPage'
 import InsightsPage from './features/insights/InsightsPage'
 
@@ -30,6 +31,8 @@ export default function App() {
       <Route element={<RequireSignIn />}>
         <Route element={<AppLayout />}>
           <Route path="/employees" element={<EmployeesPage />} />
+          <Route path="/employees/new" element={<EmployeeFormPage />} />
+          <Route path="/employees/:id" element={<EmployeeFormPage />} />
           <Route path="/insights" element={<InsightsPage />} />
         </Route>
       </Route>

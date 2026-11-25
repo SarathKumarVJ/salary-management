@@ -20,9 +20,19 @@ export type Employee = {
   hire_date: string
 }
 
+/** What the form sends: currency is derived from country by the API. */
+export type EmployeeInput = Omit<Employee, 'id' | 'currency'>
+
 export type EmployeePage = {
   employees: Employee[]
   meta: { page: number; limit: number; count: number; pages: number }
 }
 
-export type FilterOptions = { countries: string[]; levels: string[]; departments: string[]; job_titles: string[] }
+export type FilterOptions = {
+  countries: string[]
+  /** Country code → its currency, e.g. { IN: "INR" }. */
+  currencies: Record<string, string>
+  levels: string[]
+  departments: string[]
+  job_titles: string[]
+}
