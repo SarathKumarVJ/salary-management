@@ -1,10 +1,26 @@
+# env / secrets
 .env
+.env.local
+.env.*.local
+backend/config/master.key
+backend/config/credentials/*.key
+
+# OS
 .DS_Store
+
+# bootstrap leftovers
 .tmp-keep/
+
+# Rails (rails new --skip-git skipped its own .gitignore)
+backend/.bundle/
+backend/vendor/bundle/
 backend/log/*
 backend/tmp/*
 backend/storage/*
-backend/config/master.key
+
+# Frontend (create-vite also adds frontend/.gitignore)
 frontend/node_modules/
 frontend/dist/
+
+# test coverage
 coverage/

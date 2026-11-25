@@ -29,6 +29,7 @@
       "Bash(gh pr create:*)",
       "Read(./.env)",
       "Read(./**/.env)",
+      "Read(./**/.env.*.local)",
       "Read(./backend/config/master.key)"
     ]
   }
