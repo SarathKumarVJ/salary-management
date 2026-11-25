@@ -82,6 +82,8 @@ sequenceDiagram
 
 Everything except `POST /session` and `GET /up` requires `Authorization: Bearer <token>`. From slice 4, every endpoint except `/session` also requires the `hr_manager` role.
 
+**Employee JSON** has explicit fields (no timestamps): `id, full_name, email, job_title, department, level, country, currency, salary, hire_date`. `salary` is a **decimal string with two places** (`"1500000.00"`), exact for money, unlike a JSON number. The SPA types it as `string`.
+
 **Errors** use one shape everywhere: `{ "errors": { field: [msgs] } }`, with `base` for errors not tied to a field (401: `{ "errors": { "base": ["Not signed in"] } }`).
 
 | Method & path | Purpose |
@@ -89,7 +91,7 @@ Everything except `POST /session` and `GET /up` requires `Authorization: Bearer 
 | `POST /session` · `DELETE /session` · `GET /session` | Sign in (201 with token; 401 with a generic message on bad credentials) · sign out (204) · current user |
 | `GET /employees?q=&country=&department=&job_title=&sort=&dir=&page=&per_page=` | Paginated, filtered list. `sort` is checked against an allow-list. Pagination metadata is in the body. |
 | `GET /employees.csv?…same filters` | CSV export of the filtered set |
-| `GET /employees/:id` · `POST /employees` · `PATCH /employees/:id` · `DELETE /employees/:id` | CRUD. Returns 201 / 200 / 204; 404 for an unknown id; 422 with `{ "errors": { field: [msg] } }` |
+| `GET /employees/:id` · `POST /employees` · `PATCH /employees/:id` · `DELETE /employees/:id` | CRUD (built in slice 4; the list `GET /employees` comes in slice 5 with pagination). Returns 201 / 200 / 204; 400 for a missing `employee` key or malformed JSON; 403 without the `hr_manager` role; 404 for an unknown id; 422 with `{ "errors": { field: [msg] } }` |
 | `GET /filters` | Distinct departments and job titles in use, plus the **supported** countries and levels (from `Employee`), so the SPA never hard-codes those lists |
 | `GET /insights/countries` | Per country: headcount, min / median / avg / max in local currency, and median in USD |
 | `GET /insights/job_titles?country=` | Same stats per job title, optionally within one country |

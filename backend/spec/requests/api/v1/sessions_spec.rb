@@ -42,6 +42,13 @@ RSpec.describe "Api::V1::Sessions", type: :request do
       expect(response.parsed_body["user"]["email"]).to eq("hr@acme.test")
     end
 
+    it "works for a signed-in user without the hr_manager role, so they can see who they are" do
+      get "/api/v1/session", headers: auth_headers_for(create(:user, role: nil))
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["user"]["role"]).to be_nil
+    end
+
     it "is unauthorized without a token" do
       get "/api/v1/session"
 

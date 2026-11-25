@@ -2,6 +2,8 @@ module Api
   module V1
     class SessionsController < BaseController
       skip_before_action :authenticate!, only: :create
+      # Any signed-in user may see who they are and sign out.
+      skip_before_action :require_hr_manager!
       # Brute-force guard on the single high-value login (per-process cache store; null store in tests).
       rate_limit to: 10, within: 3.minutes, only: :create
 
