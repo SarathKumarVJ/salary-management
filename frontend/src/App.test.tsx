@@ -3,9 +3,7 @@ import { delay, http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { TOKEN_KEY } from './api/token'
 import { renderApp } from './test/render'
-import { server } from './test/server'
-
-const hrManager = { email: 'hr@acme.test', role: 'hr_manager' }
+import { hrManager, server } from './test/server'
 
 function mockCurrentUser() {
   server.use(

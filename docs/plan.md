@@ -56,7 +56,7 @@ and, ideally, one commit. TDD throughout.
 | 6 | Seeds ✅ | Name text files, seeded RNG (deterministic), 10k rows via `insert_all` in batches of 1,000; currency set explicitly (callbacks skipped) + spec that it matches country; HR Manager user from env; timing recorded | 1h |
 | 7 | Insights ✅ | `GET /insights?group=` via `Insights::SalaryStats`: min/avg/median/max + headcount by country, job title and department (median via MySQL 8 window functions), USD view; `EXPLAIN` check | 3h |
 | 8 | Frontend foundation + sign-in ✅ | MUI, router, layout, API client (bearer token, 401 → sign-in), sign-in page, protected routes, QueryClient, MSW test setup | 3.5h |
-| 9 | Employee list | Server-side table, search, filters, pagination, CSV download, loading/empty/error states (incl. 403 for a user without the role), tests | 2.5h |
+| 9 | Employee list ✅ | Server-side table, search, filters, pagination, CSV download, loading/empty/error states (incl. 403 for a user without the role), tests | 2.5h |
 | 10 | Employee form | Create / edit / delete, inline API validation errors, tests | 2.5h |
 | 11 | Insights page | Summary cards, tables, one chart, tests | 3h |
 | 12 | Local end-to-end | Fresh clone → `bin/setup`, seed, sign in, every flow by hand; fix gaps; README setup verified | 0.5h |

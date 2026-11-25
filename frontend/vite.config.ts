@@ -14,5 +14,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // Undo vi.spyOn / vi.stubGlobal after each test.
+    restoreMocks: true,
+    unstubGlobals: true,
   },
 })

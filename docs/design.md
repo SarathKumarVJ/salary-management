@@ -77,6 +77,17 @@ sequenceDiagram
 - **Signing out in the SPA:** a 401 clears the stored token (only if it is still the token that request sent), which
   redirects to sign-in. Sign out clears it at once and revokes the session in the background. Other tabs follow via
   the browser's `storage` event. Whenever the token goes away, the React Query cache is cleared, so no salary data outlives the session.
+
+## SPA: employee list
+
+- **List state in the URL** (`?q=&country=&department=&job_title=&sort=&dir=&page=`): refresh, back button and shared
+  links keep the view, and the same names go to the API. Only these keys are forwarded, and a salary sort is dropped
+  without a country (amounts are local currency). The search term therefore lands in browser history. Acceptable for an
+  HR-only tool; Rails already filters `q` from its logs.
+- **CSV download** is fetched with the bearer token and saved as a blob. A plain link can't send the
+  `Authorization` header, and putting the token in a URL would leak it into logs and history.
+- **Money display:** `Intl.NumberFormat` in the row's currency. The exact decimal string is converted to a number
+  for display only; nothing is calculated in the browser.
 - **Bootstrap user:** `db/seeds.rb` creates one HR Manager using `HR_MANAGER_EMAIL` / `HR_MANAGER_PASSWORD`, which come from env (with a dev-only default).
 
 ## API surface (`/api/v1`)

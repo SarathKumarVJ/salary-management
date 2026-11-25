@@ -7,11 +7,12 @@ Owner has limited production React experience: **keep it simple, idiomatic, func
 ## Structure (src/)
 - `api/` `client.ts` (fetch + bearer token, `ApiError`), `token.ts` (token store), typed endpoint functions (`session.ts`, `employees.ts`, `insights.ts`)
 - `features/auth/` sign-in page
-- `features/employees/` list, form, hooks (`useEmployees`)
+- `features/employees/` list page (queries inline: no hook until a second user needs it), form
 - `features/insights/` charts/tables for salary stats
 - `components/` shared UI
 - `types/` shared TS types matching API JSON
-- `test/` MSW `server` (each test adds its handlers) and `renderApp(path)`
+- `format.ts` display helpers (`formatMoney`, `countryName`), shared by the list and insights
+- `test/` MSW `server` (baseline responses for session, employees, filters; tests override with `server.use`) and `renderApp(path)`
 
 ## Conventions
 - API base URL from `VITE_API_URL`: unset in dev (same-origin `/api`, Vite proxies to `localhost:3000`); set to the Rails URL in production (allowed via `CORS_ORIGINS`).
