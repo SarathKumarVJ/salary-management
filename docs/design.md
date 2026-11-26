@@ -193,11 +193,26 @@ hosting work begins. Railway is the current choice. Nothing in the code is tied 
 | Render (free web + static) + Aiven/TiDB free MySQL | $0 | Two providers; free web service sleeps, so the first request takes 30–50 s |
 | Fly.io (existing Dockerfile) + Aiven/TiDB MySQL | ~$0 | Most hands-on |
 
-Before going live (slice 13): `VITE_API_URL` must be `https://` (the bearer token and password travel in it),
-and the SPA host should send a Content-Security-Policy (`script-src 'self'`, `connect-src` the API) to enforce the
-"no third-party scripts" assumption behind the localStorage token.
+**How it runs (Railway, three services from one repo):**
 
-Production needs `DATABASE_URL`, `RAILS_MASTER_KEY`, `CORS_ORIGINS` (the SPA's URL) and `HR_MANAGER_EMAIL` / `HR_MANAGER_PASSWORD` on the API, and `VITE_API_URL` at SPA build time.
+| Service | Built from | Notes |
+|---|---|---|
+| MySQL | Railway database | Private network only |
+| API | `backend/Dockerfile` (Rails default: Thruster + Puma) | Boot runs `db:prepare`: an empty database gets the schema and the seed (HR Manager + 10,000 employees). Health check `GET /up`. |
+| SPA | `frontend/Dockerfile` (Node build, Caddy serves `dist/`) | Unknown paths fall back to `index.html` for client-side routes; hashed assets cached for a year |
+
+| Variable | Service | Why |
+|---|---|---|
+| `DATABASE_URL` | API | `mysql2://user:pass@host:port/db` built from the MySQL service's variables. Rails needs the `mysql2` scheme, so the provider's `mysql://` URL isn't used as is. |
+| `SECRET_KEY_BASE` | API | From `bin/rails secret`. The code reads nothing from encrypted credentials, so `RAILS_MASTER_KEY` isn't needed and the master key never leaves the laptop. |
+| `CORS_ORIGINS` | API | The SPA's `https://` URL. Boot fails without it, rather than silently blocking the frontend. |
+| `HR_MANAGER_EMAIL`, `HR_MANAGER_PASSWORD` | API | Required outside development (password ≥ 12 characters). The seed fails without them, so the well-known dev login can't reach production. |
+| `VITE_API_URL` | SPA (build) | The API's `https://` URL, baked into the bundle. The build refuses `http://`, because the bearer token and password travel to it. |
+
+**Content-Security-Policy** (sent by Caddy): scripts only from the SPA's own origin and `connect-src` limited to the
+API, which enforces the "no third-party scripts" assumption behind keeping the token in localStorage. Styles allow
+`'unsafe-inline'` because MUI/Emotion inject `<style>` tags. TLS is terminated by Railway; Rails has `assume_ssl`
+and `force_ssl` on.
 
 ## Decisions
 | Decision | Choice | Why | Alternative |

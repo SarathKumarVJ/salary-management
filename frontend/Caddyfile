@@ -1,0 +1,22 @@
+# Serves the built SPA. PORT comes from the host (Railway); VITE_API_URL is the API origin allowed in connect-src.
+:{$PORT:8080} {
+	root * /srv
+	encode gzip
+
+	# Client-side routes (/employees/7, /insights) load index.html; React Router takes over.
+	try_files {path} /index.html
+	file_server
+
+	# Hashed build assets never change; index.html must always be revalidated.
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+	header /index.html Cache-Control "no-cache"
+
+	# The bearer token lives in localStorage, so allow scripts only from this origin (docs/design.md).
+	# MUI/Emotion inject <style> tags, hence 'unsafe-inline' for styles only.
+	header {
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' {$VITE_API_URL}; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+}
