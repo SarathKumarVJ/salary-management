@@ -41,13 +41,23 @@ export default function EmployeesPage() {
   // The CSV has every matching employee (the API ignores `page`).
   const csv = useMutation({ mutationFn: () => downloadEmployeesCsv(query) })
 
+  // A department's own titles; every title for none or one the options don't know (Object.hasOwn: the value comes
+  // from the URL, and `?department=constructor` must not reach the object's prototype).
+  const titlesFor = (department: string) => {
+    const byDepartment = options.data?.job_titles_by_department
+    return byDepartment && Object.hasOwn(byDepartment, department) ? byDepartment[department] : options.data?.job_titles
+  }
+
   // Empty values are removed. Any change except paging starts again from page 1.
+  // Choosing a department drops a job title that isn't in it, so the list never turns empty by mistake.
   function update(changes: Record<string, string>) {
     csv.reset()
     setSearchParams((current) => {
       const next = listParams(current)
       Object.entries(changes).forEach(([key, value]) => (value ? next.set(key, value) : next.delete(key)))
       if (!('page' in changes)) next.delete('page')
+      const title = next.get('job_title')
+      if (changes.department && title && !titlesFor(changes.department)?.includes(title)) next.delete('job_title')
       return listParams(next)
     })
   }
@@ -188,7 +198,7 @@ export default function EmployeesPage() {
         </Box>
         {filterSelect('country', 'Country', options.data?.countries, countryName)}
         {filterSelect('department', 'Department', options.data?.departments)}
-        {filterSelect('job_title', 'Job title', options.data?.job_titles)}
+        {filterSelect('job_title', 'Job title', titlesFor(params.get('department') ?? ''))}
       </Box>
 
       {content}

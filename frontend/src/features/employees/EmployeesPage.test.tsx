@@ -35,6 +35,7 @@ function mockFilters() {
       HttpResponse.json({
         countries: ['IN', 'US'], currencies: { IN: 'INR', US: 'USD' }, levels: ['L1', 'L2', 'L3'],
         departments: ['Engineering', 'People'], job_titles: ['Recruiter', 'Software Engineer'],
+        job_titles_by_department: { Engineering: ['Software Engineer'], People: ['Recruiter'] },
       }),
     ),
   )
@@ -84,6 +85,44 @@ describe('employee list', () => {
     await waitFor(() => expect(requests.last().get('job_title')).toBe('Software Engineer'))
     expect(requests.last().get('country')).toBe('IN')
     expect(requests.last().get('department')).toBe('Engineering')
+  })
+
+  it('offers only the job titles of the chosen department', async () => {
+    mockFilters()
+    mockEmployees()
+    const { user } = renderApp('/employees')
+    await screen.findByText('Ana Silva')
+
+    await choose(user, 'Department', 'People')
+    await user.click(screen.getByRole('combobox', { name: 'Job title' }))
+
+    const titles = within(await screen.findByRole('listbox')).getAllByRole('option').map((option) => option.textContent)
+    expect(titles).toEqual(['All', 'Recruiter'])
+  })
+
+  it('clears a job title that is not in the newly chosen department', async () => {
+    mockFilters()
+    const requests = mockEmployees()
+    const { user } = renderApp('/employees?department=Engineering&job_title=Software+Engineer')
+    await screen.findByText('Ana Silva')
+
+    await choose(user, 'Department', 'People')
+
+    await waitFor(() => expect(requests.last().get('department')).toBe('People'))
+    expect(requests.last().get('job_title')).toBeNull()
+    expect(screen.getByRole('combobox', { name: 'Job title' })).not.toHaveTextContent('Software Engineer')
+  })
+
+  it('offers every job title for a department the options do not know, even a crafted one', async () => {
+    mockFilters()
+    mockEmployees()
+    const { user } = renderApp('/employees?department=__proto__')
+    await screen.findByText('Ana Silva')
+
+    await user.click(screen.getByRole('combobox', { name: 'Job title' }))
+
+    const titles = within(await screen.findByRole('listbox')).getAllByRole('option').map((option) => option.textContent)
+    expect(titles).toEqual(['All', 'Recruiter', 'Software Engineer'])
   })
 
   it('sorts by salary only once a country is chosen, since amounts are in local currency', async () => {

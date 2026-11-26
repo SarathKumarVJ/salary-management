@@ -10,6 +10,6 @@ export const server = setupServer(
     HttpResponse.json({ employees: [], meta: { page: 1, limit: 25, count: 0, pages: 1 } }),
   ),
   http.get('*/api/v1/filters', () =>
-    HttpResponse.json({ countries: [], currencies: {}, levels: [], departments: [], job_titles: [] }),
+    HttpResponse.json({ countries: [], currencies: {}, levels: [], departments: [], job_titles: [], job_titles_by_department: {} }),
   ),
 )

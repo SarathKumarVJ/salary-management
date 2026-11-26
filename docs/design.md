@@ -84,6 +84,12 @@ sequenceDiagram
   links keep the view, and the same names go to the API. Only these keys are forwarded, and a salary sort is dropped
   without a country (amounts are local currency). The search term therefore lands in browser history. Acceptable for an
   HR-only tool; Rails already filters `q` from its logs.
+- **Job title follows department:** `GET /filters` also returns `job_titles_by_department`, built from the
+  department / job title pairs actually in use and grouped ignoring case (like MySQL, "Finance" and "finance" are
+  one department), so the job title filter only offers titles from the chosen department. A department the map
+  doesn't know (e.g. typed into the URL) offers every title.
+  Choosing a department drops a job title that isn't in it, instead of showing an always-empty list. The employee
+  form keeps job title free text (suggestions from every title).
 - **CSV download** is fetched with the bearer token and saved as a blob. A plain link can't send the
   `Authorization` header, and putting the token in a URL would leak it into logs and history.
 - **Money display:** `Intl.NumberFormat` in the row's currency. The exact decimal string is converted to a number

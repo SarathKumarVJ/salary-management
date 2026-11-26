@@ -35,6 +35,8 @@ export type FilterOptions = {
   levels: string[]
   departments: string[]
   job_titles: string[]
+  /** Department → the job titles in use there, for narrowing the job title filter. */
+  job_titles_by_department: Record<string, string[]>
 }
 
 /** One statistics group (a country, job title or department). Money values are 2dp decimal strings. */
