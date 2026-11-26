@@ -178,6 +178,10 @@ Averages of 10 runs with Active Record's query cache **off**. An earlier version
 this scale. The CSV cost is dominated by `number_to_rounded` (exact BigDecimal formatting). Half a second is acceptable
 for a download, and hand-rolled formatting would be about 4× faster but is more code to trust. Revisit only if exports grow.
 
+**End to end over HTTP** (slice 12: fresh clone, freshly created and seeded database, requests through the Vite
+proxy with a bearer token; median of 3): list 13 ms, search 26 ms, filtered salary sort on page 5 15 ms,
+insights 17–47 ms, full CSV 565 ms.
+
 ## Deployment (local first, then hosted)
 
 The whole system has to work locally end to end (MySQL, Rails, Vite, seeded data, sign-in) before any

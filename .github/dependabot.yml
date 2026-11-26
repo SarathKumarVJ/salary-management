@@ -10,6 +10,10 @@ updates:
   schedule:
     interval: weekly
   open-pull-requests-limit: 3
+  ignore:
+  # Types must match the Node runtime (.nvmrc: 24); bump together with Node.
+  - dependency-name: "@types/node"
+    update-types: ["version-update:semver-major"]
 - package-ecosystem: github-actions
   directory: "/"
   schedule:

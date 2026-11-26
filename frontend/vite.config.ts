@@ -7,8 +7,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     // In development the SPA calls /api/* on its own origin; Vite forwards to Rails.
+    // API_PROXY_TARGET: only if Rails runs elsewhere (e.g. port 3000 is taken).
     proxy: {
-      '/api': 'http://localhost:3000',
+      '/api': process.env.API_PROXY_TARGET ?? 'http://localhost:3000',
     },
   },
   test: {

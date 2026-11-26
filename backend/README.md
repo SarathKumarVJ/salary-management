@@ -1,24 +1,4 @@
-# README
+# Backend
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
-
-Things you may want to cover:
-
-* Ruby version
-
-* System dependencies
-
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+Rails 8.1 API (MySQL 8) for the salary management app. Setup, running and tests: see the [root README](../README.md).
+Conventions: [CLAUDE.md](CLAUDE.md) · design and trade-offs: [docs/design.md](../docs/design.md).
