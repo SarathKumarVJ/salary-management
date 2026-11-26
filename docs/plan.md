@@ -39,7 +39,7 @@ and, ideally, one commit. TDD throughout.
 |---|---|---|
 | Currency | Store `salary` (decimal) in local currency; `currency` derived from country. Per-country stats in local currency; cross-country view normalised to USD via static, dated rates. | Assumed — awaiting recruiter |
 | Auth | Sign-in for the HR Manager persona: `has_secure_password`, revocable session tokens (bearer), single `hr_manager` role enforced in one `before_action`. | **Decided (owner)** — awaiting recruiter confirmation |
-| Deploy | **Local first**: the full system runs end to end locally before any hosting work. Then Railway (API + MySQL + static SPA); config is env-only so the host can change. | **Decided (owner)**, host switchable |
+| Deploy | **Local first**: the full system runs end to end locally before any hosting work. Then Railway (API + static SPA) with Aiven free MySQL (Railway's trial credit didn't cover a database); config is env-only so the host can change. | **Done** (slice 13) |
 | Component library | MUI — data grid + form controls out of the box; lowest-risk path. | **Decided** (slice 8) |
 | Product extras | CSV export of filtered list (HR is migrating off Excel). CSV import listed as deliberately left out. | Proposed |
 
@@ -60,7 +60,7 @@ and, ideally, one commit. TDD throughout.
 | 10 | Employee form ✅ | Create / edit / delete, inline API validation errors, tests | 2.5h |
 | 11 | Insights page ✅ | Grouped stats table (country / job title / department, country filter), headcount summary line (instead of cards, which would repeat the table), one chart without a library, tests | 3h |
 | 12 | Local end-to-end ✅ | Fresh clone → `bin/setup`, seed, sign in, every flow by hand; fix gaps; README setup verified | 0.5h |
-| 13 | Deploy | Railway (or alternative): env vars, prod seed, smoke test | 2–3h |
+| 13 | Deploy ✅ | Railway (API + SPA) + Aiven MySQL: env vars, prod seed, smoke test | 2–3h |
 | 14 | Submission | README (setup, decisions, trade-offs, performance), AI prompt log, demo video | 2h |
 | | **Total** | | **≈ 31–32h (~4 focused days, 4.5 with buffer)** |
 

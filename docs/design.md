@@ -185,34 +185,43 @@ insights 17–47 ms, full CSV 565 ms.
 ## Deployment (local first, then hosted)
 
 The whole system has to work locally end to end (MySQL, Rails, Vite, seeded data, sign-in) before any
-hosting work begins. Railway is the current choice. Nothing in the code is tied to it (config comes only from env), so switching later costs nothing.
+hosting work begins. Nothing in the code is tied to a host (config comes only from env), so switching later costs nothing.
 
 | Option | Cost | Trade-off |
 |---|---|---|
-| **Railway** (API + MySQL + static SPA) | Trial / hobby credit | One platform, managed MySQL, least setup. **Recommended.** |
-| Render (free web + static) + Aiven/TiDB free MySQL | $0 | Two providers; free web service sleeps, so the first request takes 30–50 s |
-| Fly.io (existing Dockerfile) + Aiven/TiDB MySQL | ~$0 | Most hands-on |
+| Railway (API + MySQL + static SPA) | Trial / hobby credit | One platform, least setup. The first choice, but the trial's free credit didn't cover a database. |
+| **Railway (API + SPA) + Aiven free MySQL** | $0 | Two providers; the database is reached over the public internet with TLS. **Live.** |
+| Render (free web + static) + Aiven/TiDB free MySQL | $0 | Free web service sleeps, so the first request takes 30–50 s |
 
-**How it runs (Railway, three services from one repo):**
+Aiven over TiDB: Aiven is real MySQL 8, which the exact-median query and indexes were built and measured on;
+TiDB is only MySQL-compatible.
+
+**How it runs (two Railway services from one repo, plus Aiven MySQL):**
 
 | Service | Built from | Notes |
 |---|---|---|
-| MySQL | Railway database | Private network only |
-| API | `backend/Dockerfile` (Rails default: Thruster + Puma) | Boot runs `db:prepare`: an empty database gets the schema and the seed (HR Manager + 10,000 employees). Health check `GET /up`. |
-| SPA | `frontend/Dockerfile` (Node build, Caddy serves `dist/`) | Unknown paths fall back to `index.html` for client-side routes; hashed assets cached for a year |
+| MySQL | Aiven free plan (MySQL 8) | Public endpoint, TLS required |
+| API | `backend/Dockerfile` (Rails default: Thruster + Puma), root directory `/backend` | Boot runs `db:prepare`: an empty database gets the schema and the seed (HR Manager + 10,000 employees, about 8 s over TLS). Health check `GET /up`. |
+| SPA | `frontend/Dockerfile` (Node build, Caddy serves `dist/`), root directory `/frontend` | Client-side routes fall back to `index.html` (always revalidated); hashed assets are cached for a year, and a missing one is a 404, so a stale page after a deploy can't get HTML back as JavaScript |
 
 | Variable | Service | Why |
 |---|---|---|
-| `DATABASE_URL` | API | `mysql2://user:pass@host:port/db` built from the MySQL service's variables. Rails needs the `mysql2` scheme, so the provider's `mysql://` URL isn't used as is. |
+| `DATABASE_URL` | API | `mysql2://user:pass@host:port/defaultdb?ssl_mode=required`. Rails needs the `mysql2` scheme; `ssl_mode=required` because Aiven only accepts TLS. It encrypts but doesn't verify the server's certificate; see the note below. |
+| `HTTP_PORT` | API | `8080`, the port the Railway domain routes to. Thruster listens on it (default 80) and proxies to Puma on 3000. |
 | `SECRET_KEY_BASE` | API | From `bin/rails secret`. The code reads nothing from encrypted credentials, so `RAILS_MASTER_KEY` isn't needed and the master key never leaves the laptop. |
 | `CORS_ORIGINS` | API | The SPA's `https://` URL. Boot fails without it, rather than silently blocking the frontend. |
 | `HR_MANAGER_EMAIL`, `HR_MANAGER_PASSWORD` | API | Required outside development (password ≥ 12 characters). The seed fails without them, so the well-known dev login can't reach production. |
-| `VITE_API_URL` | SPA (build) | The API's `https://` URL, baked into the bundle. The build refuses `http://`, because the bearer token and password travel to it. |
+| `VITE_API_URL` | SPA (build and runtime) | The API's `https://` URL. Baked into the bundle at build time (the image build fails if it's missing, and `vite build` refuses `http://`, because the bearer token and password travel to it). Caddy also reads it at startup for the CSP's `connect-src`, so if it's missing there the browser blocks every API call. |
 
-**Content-Security-Policy** (sent by Caddy): scripts only from the SPA's own origin and `connect-src` limited to the
-API, which enforces the "no third-party scripts" assumption behind keeping the token in localStorage. Styles allow
-`'unsafe-inline'` because MUI/Emotion inject `<style>` tags. TLS is terminated by Railway; Rails has `assume_ssl`
-and `force_ssl` on.
+**Security headers** (sent by Caddy): the Content-Security-Policy allows scripts only from the SPA's own origin and
+`connect-src` only to the API, which enforces the "no third-party scripts" assumption behind keeping the token in
+localStorage. Styles allow `'unsafe-inline'` because MUI/Emotion inject `<style>` tags. HSTS is on, without
+`includeSubDomains` because `*.up.railway.app` is a shared domain. TLS is terminated by Railway; Rails has `assume_ssl`
+and `force_ssl` on, so the API sends HSTS too.
+
+**Not done yet:** the database connection doesn't verify Aiven's certificate (`ssl_mode=verify_identity` with Aiven's
+project CA file would). The traffic is encrypted, but a man-in-the-middle on the route between Railway and Aiven isn't
+ruled out.
 
 ## Decisions
 | Decision | Choice | Why | Alternative |

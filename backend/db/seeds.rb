@@ -12,7 +12,7 @@ hr_email, hr_password =
 
 # Creates the user only if missing; an existing user keeps its password (changing the env var won't reset it).
 User.create_with(password: hr_password, role: "hr_manager").find_or_create_by!(email: hr_email)
-puts "HR Manager: #{hr_email}"
+puts "HR Manager: ready" # not the email: seed output ends up in deploy logs
 
 if Employee.exists?
   puts "Employees: #{Employee.count} already present, skipping."

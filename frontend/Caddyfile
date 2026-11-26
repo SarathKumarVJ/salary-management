@@ -3,19 +3,27 @@
 	root * /srv
 	encode gzip
 
-	# Client-side routes (/employees/7, /insights) load index.html; React Router takes over.
-	try_files {path} /index.html
-	file_server
-
-	# Hashed build assets never change; index.html must always be revalidated.
+	# Hashed build assets never change. A missing one is a 404, never index.html: after a deploy, a stale
+	# page asking for an old file must not get HTML back (and cache it for a year).
 	@assets path /assets/*
-	header @assets Cache-Control "public, max-age=31536000, immutable"
-	header /index.html Cache-Control "no-cache"
+	handle @assets {
+		header Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+
+	# Everything else is the app: client-side routes (/employees/7, /insights) load index.html, always revalidated.
+	handle {
+		header Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
 
 	# The bearer token lives in localStorage, so allow scripts only from this origin (docs/design.md).
 	# MUI/Emotion inject <style> tags, hence 'unsafe-inline' for styles only.
+	# No includeSubDomains on HSTS: *.up.railway.app is a shared domain.
 	header {
 		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' {$VITE_API_URL}; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
 	}
