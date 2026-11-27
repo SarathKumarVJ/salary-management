@@ -41,8 +41,11 @@ instead of building pivot tables by hand.
 | Gender / ethnicity pay-gap analysis | Needs sensitive personal data the brief doesn't provide, and careful legal handling. Better collected on purpose than invented in seed data. |
 | Soft delete / leaver status | Delete is a hard delete with a confirmation step. Tracking leavers belongs with the audit trail above. |
 
-## Assumptions (awaiting recruiter confirmation)
+## Assumptions
+
+No reply from the recruiter yet, so the app is built as described here.
+
 - React frontend (the brief lists React/Next for the UI).
 - Salaries are stored in local currency, with a USD-normalised view for comparing countries.
 - Sign-in with a single `hr_manager` role, since the brief's persona is "HR Manager of the org".
-- Works fully locally first. Then deploy to a low-cost host (Railway recommended, can change) with a recorded video demo (see `docs/design.md` → Deployment).
+- Works fully locally first. Then deploy to a low-cost host with a recorded video demo: deployed on Railway with Aiven's free MySQL 8 (see `docs/design.md` → Deployment).

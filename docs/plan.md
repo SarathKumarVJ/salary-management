@@ -17,6 +17,10 @@ and, ideally, one commit. TDD throughout.
 | Incremental commits | On track |
 | Artifacts: prompts, trade-offs, performance notes, diagrams | Folders exist, empty |
 
+**Status at submission:** slices 0–13 and the slice 14 docs are done; the demo video is recorded last. The app is
+deployed (Railway + Aiven MySQL), seeded with 10,000 employees, covered by RSpec and Vitest in CI, and documented in
+the README, `docs/design.md` and `docs/ai-prompts/`. The table above is kept as it was at the start, for history.
+
 ## 2. Scaffold review findings
 
 **Breaking**
@@ -37,11 +41,11 @@ and, ideally, one commit. TDD throughout.
 
 | Decision | Choice | Status |
 |---|---|---|
-| Currency | Store `salary` (decimal) in local currency; `currency` derived from country. Per-country stats in local currency; cross-country view normalised to USD via static, dated rates. | Assumed — awaiting recruiter |
-| Auth | Sign-in for the HR Manager persona: `has_secure_password`, revocable session tokens (bearer), single `hr_manager` role enforced in one `before_action`. | **Decided (owner)** — awaiting recruiter confirmation |
+| Currency | Store `salary` (decimal) in local currency; `currency` derived from country. Per-country stats in local currency; cross-country view normalised to USD via static, dated rates. | Built as assumed (no reply from the recruiter yet) |
+| Auth | Sign-in for the HR Manager persona: `has_secure_password`, revocable session tokens (bearer), single `hr_manager` role enforced in one `before_action`. | **Decided (owner)**, built (slices 3, 8) |
 | Deploy | **Local first**: the full system runs end to end locally before any hosting work. Then Railway (API + static SPA) with Aiven free MySQL (Railway's trial credit didn't cover a database); config is env-only so the host can change. | **Done** (slice 13) |
 | Component library | MUI — data grid + form controls out of the box; lowest-risk path. | **Decided** (slice 8) |
-| Product extras | CSV export of filtered list (HR is migrating off Excel). CSV import listed as deliberately left out. | Proposed |
+| Product extras | CSV export of filtered list (HR is migrating off Excel). CSV import listed as deliberately left out. | **Done** (slices 5, 9) |
 
 ## 4. Slices and estimates
 
@@ -61,7 +65,7 @@ and, ideally, one commit. TDD throughout.
 | 11 | Insights page ✅ | Grouped stats table (country / job title / department, country filter), headcount summary line (instead of cards, which would repeat the table), one chart without a library, tests | 3h |
 | 12 | Local end-to-end ✅ | Fresh clone → `bin/setup`, seed, sign in, every flow by hand; fix gaps; README setup verified | 0.5h |
 | 13 | Deploy ✅ | Railway (API + SPA) + Aiven MySQL: env vars, prod seed, smoke test | 2–3h |
-| 14 | Submission | README (setup, decisions, trade-offs, performance), AI prompt log, demo video | 2h |
+| 14 | Submission (docs ✅, video pending) | README (setup, decisions, trade-offs, performance), AI prompt log, demo video | 2h |
 | | **Total** | | **≈ 31–32h (~4 focused days, 4.5 with buffer)** |
 
 ## 5. Risks and cut order
